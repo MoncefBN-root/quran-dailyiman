@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Quran Studio</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#050816;
+  --card:#0f172a;
+  --text:#f8fafc;
+  --muted:#94a3b8;
+  --border:rgba(255,255,255,0.08);
+  --accent:#8b5cf6;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  font-family:'Poppins',sans-serif;
+  background: radial-gradient(circle at top,#1e1b4b 0%,#050816 45%);
+  color:var(--text);
+}
+
+.sidebar{
+  width:260px;
+  position:fixed;
+  height:100vh;
+  padding:28px 20px;
+  background:rgba(15,23,42,0.75);
+  backdrop-filter:blur(20px);
+  border-right:1px solid var(--border);
+}
+
+.logo{
+  font-size:28px;
+  font-weight:700;
+  background:linear-gradient(135deg,#a78bfa,#7c3aed);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  margin-bottom:40px;
+}
+
+.menu div{
+  padding:14px;
+  margin-bottom:8px;
+  border-radius:14px;
+  color:var(--muted);
+  cursor:pointer;
+}
+
+.menu div:hover{background:rgba(255,255,255,0.06);color:white;}
+
+.main{
+  margin-left:260px;
+  padding:40px;
+}
+
+.search{
+  width:100%;max-width:420px;
+  padding:14px;
+  border-radius:16px;
+  border:1px solid var(--border);
+  background:#0f172a;
+  color:white;
+  margin-bottom:30px;
+}
+
+.hero{
+  background:linear-gradient(135deg,#111827,#1e1b4b);
+  padding:50px;
+  border-radius:30px;
+  margin-bottom:40px;
+}
+
+.hero h1{font-size:42px;}
+.hero p{color:var(--muted);}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:18px;
+}
+
+.card{
+  background:rgba(15,23,42,0.7);
+  border:1px solid var(--border);
+  padding:18px;
+  border-radius:22px;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.card:hover{transform:translateY(-6px);border-color:var(--accent);}
+
+.number{
+  width:46px;height:46px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#7c3aed,#6d28d9);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:12px;
+}
+
+.player{
+  position:fixed;
+  bottom:14px;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(1100px,94%);
+  background:rgba(15,23,42,0.75);
+  backdrop-filter:blur(25px);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:26px;
+  padding:14px 18px;
+  display:flex;
+  gap:16px;
+  align-items:center;
+}
+
+.play-btn{
+  width:50px;height:50px;
+  border:none;border-radius:50%;
+  background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+  color:white;
+  cursor:pointer;
+}
+
+.progress{
+  flex:1;
+  height:6px;
+  background:#1e293b;
+  border-radius:999px;
+  cursor:pointer;
+  overflow:hidden;
+}
+
+.bar{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,#8b5cf6,#c084fc);
+}
+
+.time{font-size:12px;color:var(--muted);margin-top:6px;}
+
+select{
+  background:#0f172a;
+  color:white;
+  border:1px solid var(--border);
+  padding:8px;
+  border-radius:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="logo">QuranStudio</div>
+  <div class="menu">
+    <div>Accueil</div>
+    <div>Bibliothèque</div>
+    <div>Favoris</div>
+  </div>
+</div>
+
+<div class="main">
+  <input class="search" id="search" placeholder="Rechercher une sourate..." />
+
+  <div class="hero">
+    <h1>Écoute le Coran</h1>
+    <p>Lecture stable et fluide des sourates</p>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="player">
+
+  <button class="play-btn" id="play">▶</button>
+
+  <div style="flex:1">
+    <div id="title">Aucune sourate</div>
+    <div class="progress" id="prog"><div class="bar" id="bar"></div></div>
+    <div class="time" id="time">00:00 / 00:00</div>
+  </div>
+
+  <select id="reciter">
+    <option value="afs">Alafasy</option>
+    <option value="hus">Al-Husary</option>
+    <option value="minsh">Al-Minshawi</option>
+    <option value="sds">Al-Sudais</option>
+    <option value="shur">Al-Shuraim</option>
+    <option value="maher">Maher AlMuaiqly</option>
+    <option value="ghamdi">Saad AlGhamdi</option>
+  </select>
+
+</div>
+
+<audio id="audio"></audio>
+
+<script>
+const grid=document.getElementById("grid");
+const audio=document.getElementById("audio");
+const play=document.getElementById("play");
+const title=document.getElementById("title");
+const bar=document.getElementById("bar");
+const time=document.getElementById("time");
+const reciter=document.getElementById("reciter");
+const prog=document.getElementById("prog");
+const search=document.getElementById("search");
+
+let surahs=[];
+let current=null;
+let ayahs=[];
+let index=0;
+
+const map={
+ afs:"ar.alafasy",
+ hus:"ar.husary",
+ minsh:"ar.minshawi",
+ sds:"ar.abdurrahmaansudais",
+ shur:"ar.shaatree",
+ maher:"ar.mahermuaiqly",
+ ghamdi:"ar.saadsghamdi"
+};
+
+async function load(){
+ const r=await fetch("https://api.alquran.cloud/v1/surah");
+ const d=await r.json();
+ surahs=d.data||[];
+ render(surahs);
+}
+
+function render(list){
+ grid.innerHTML="";
+ list.forEach(s=>{
+  const div=document.createElement("div");
+  div.className="card";
+  div.innerHTML=`<div class='number'>${s.number}</div><h3>${s.englishName}</h3><p>${s.numberOfAyahs} versets</p>`;
+  div.onclick=()=>playSurah(s.number);
+  grid.appendChild(div);
+ });
+}
+
+async function playSurah(num){
+ try{
+  const ed=map[reciter.value]||"ar.alafasy";
+  const r=await fetch(`https://api.alquran.cloud/v1/surah/${num}/${ed}`);
+  const d=await r.json();
+
+  ayahs=d.data.ayahs;
+  index=0;
+
+  title.textContent=d.data.englishName;
+  playAyah();
+ }catch(e){
+  title.textContent="Erreur audio";
+ }
+}
+
+function playAyah(){
+ if(!ayahs.length) return;
+
+ const a=ayahs[index];
+ if(!a) return;
+
+ audio.src=a.audio;
+ audio.play().catch(()=>{});
+
+ play.textContent="❚❚";
+}
+
+audio.addEventListener("ended",()=>{
+ index++;
+ if(index<ayahs.length) playAyah();
+ else play.textContent="▶";
+});
+
+play.onclick=()=>{
+ if(!audio.src) return;
+ if(audio.paused){audio.play();play.textContent="❚❚";}
+ else{audio.pause();play.textContent="▶";}
+};
+
+audio.addEventListener("timeupdate",()=>{
+ if(!audio.duration) return;
+ const p=(audio.currentTime/audio.duration)*100;
+ bar.style.width=Math.min(100,Math.max(0,p))+"%";
+ time.textContent=`${fmt(audio.currentTime)} / ${fmt(audio.duration)}`;
+});
+
+prog.onclick=(e)=>{
+ if(!audio.duration) return;
+ const r=prog.getBoundingClientRect();
+ audio.currentTime=(e.clientX-r.left)/r.width*audio.duration;
+};
+
+function fmt(s){
+ return isNaN(s)?"00:00":String(Math.floor(s/60)).padStart(2,"0")+":"+String(Math.floor(s%60)).padStart(2,"0");
+}
+
+search.addEventListener("input",()=>{
+ const v=search.value.toLowerCase();
+ render(surahs.filter(s=>s.englishName.toLowerCase().includes(v)||String(s.number).includes(v)));
+});
+
+load();
+</script>
+
+</body>
+</html>
